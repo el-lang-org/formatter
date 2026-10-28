@@ -1,15 +1,4 @@
 module Main
-fn read_all(reader: IO.Stdin, buffer: Buffer) -> {:ok, Buffer} | {:error, IO.Error} do
-  match Reader.read(reader, 4096) do
-    {:ok, data} ->
-      read_all(reader, Buffer.append_bytes(buffer, data))
-    :eof ->
-      {:ok, buffer}
-    {:error, error} ->
-      {:error, error}
-  end
-end
-
 fn main() -> i32 do
   with {:ok, buffer} <- read_all(IO.stdin(), Buffer.new()),
       {:ok, text} <- String.from_bytes(Buffer.to_bytes(buffer)),
@@ -23,5 +12,16 @@ fn main() -> i32 do
     {:error, error} ->
       IO.report(error)
       1
+  end
+end
+
+fn read_all(reader: IO.Stdin, buffer: Buffer) -> {:ok, Buffer} | {:error, IO.Error} do
+  match Reader.read(reader, 4096) do
+    {:ok, data} ->
+      read_all(reader, Buffer.append_bytes(buffer, data))
+    :eof ->
+      {:ok, buffer}
+    {:error, error} ->
+      {:error, error}
   end
 end
