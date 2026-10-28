@@ -1,48 +1,14 @@
 module Pretty
-fn test_detects_xml_by_first_character() -> Assert.Result do
-  with :ok <- Assert.that(is_xml("<a/>"), "element"),
-      :ok <- Assert.that(is_xml("  \n<?xml version=\"1.0\"?><a/>"), "declaration after blanks"),
-      :ok <- Assert.that(is_xml("{\"a\": 1}") == false, "object is not xml"),
-      :ok <- Assert.that(is_xml("[1]") == false, "array is not xml"),
-      :ok <- Assert.that(is_xml("") == false, "empty is not xml") do
-    :ok
-  end
-end
-
-fn test_formats_json() -> Assert.Result do
-  Assert.equal(outcome(format("{\"a\":[1,true],\"b\":null}")), "{\n  \"a\": [\n    1,\n    true\n  ],\n  \"b\": null\n}")
-end
-
-fn test_formats_xml() -> Assert.Result do
-  Assert.equal(outcome(format("<a><b>t</b><c/></a>")), "<a>\n  <b>t</b>\n  <c/>\n</a>")
-end
-
-fn test_keeps_mixed_xml_content_on_one_line() -> Assert.Result do
-  Assert.equal(outcome(format("<p>a <b>b</b> c</p>")), "<p>a <b>b</b> c</p>")
-end
-
-fn test_reports_errors_for_each_kind() -> Assert.Result do
-  with :ok <- Assert.equal(outcome(format("<a><b></a>")), "error: parse error: expected </b> but found </a> at line 1, column 7"),
-      :ok <- Assert.equal(outcome(format("   \n")), "error: input is empty"),
-      :ok <- Assert.that(String.contains(outcome(format("{nope")), "error: parse error"), "malformed json is an error") do
-    :ok
-  end
-end
-
-# Collapses a result into one comparable string; unions have no `Eq`.
-fn outcome(result: {:ok, string} | {:error, string}) -> string do
-  match result do
-    {:ok, text} -> text
-    {:error, message} -> "error: #{message}"
-  end
-end
-
 # Pretty-prints `text` as XML or JSON, whichever it looks like.
 fn format(text: string) -> {:ok, string} | {:error, string} do
   if is_blank(text) do
     {:error, "input is empty"}
   else
-    if is_xml(text) do Xml.reformat(text) else format_json(text) end
+    if is_xml(text) do
+      Xml.reformat(text)
+    else
+      format_json(text)
+    end
   end
 end
 
@@ -85,4 +51,42 @@ fn is_blank(text: string) -> bool do
     index := index + 1
   end
   true
+end
+
+# Collapses a result into one comparable string; unions have no `Eq`.
+fn outcome(result: {:ok, string} | {:error, string}) -> string do
+  match result do
+    {:ok, text} -> text
+    {:error, message} -> "error: #{message}"
+  end
+end
+
+fn test_detects_xml_by_first_character() -> Assert.Result do
+  with :ok <- Assert.that(is_xml("<a/>"), "element"),
+      :ok <- Assert.that(is_xml("  \n<?xml version=\"1.0\"?><a/>"), "declaration after blanks"),
+      :ok <- Assert.that(is_xml("{\"a\": 1}") == false, "object is not xml"),
+      :ok <- Assert.that(is_xml("[1]") == false, "array is not xml"),
+      :ok <- Assert.that(is_xml("") == false, "empty is not xml") do
+    :ok
+  end
+end
+
+fn test_formats_json() -> Assert.Result do
+  Assert.equal(outcome(format("{\"a\":[1,true],\"b\":null}")), "{\n  \"a\": [\n    1,\n    true\n  ],\n  \"b\": null\n}")
+end
+
+fn test_formats_xml() -> Assert.Result do
+  Assert.equal(outcome(format("<a><b>t</b><c/></a>")), "<a>\n  <b>t</b>\n  <c/>\n</a>")
+end
+
+fn test_keeps_mixed_xml_content_on_one_line() -> Assert.Result do
+  Assert.equal(outcome(format("<p>a <b>b</b> c</p>")), "<p>a <b>b</b> c</p>")
+end
+
+fn test_reports_errors_for_each_kind() -> Assert.Result do
+  with :ok <- Assert.equal(outcome(format("<a><b></a>")), "error: parse error: expected </b> but found </a> at line 1, column 7"),
+      :ok <- Assert.equal(outcome(format("   \n")), "error: input is empty"),
+      :ok <- Assert.that(String.contains(outcome(format("{nope")), "error: parse error"), "malformed json is an error") do
+    :ok
+  end
 end

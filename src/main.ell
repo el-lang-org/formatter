@@ -1,17 +1,14 @@
 module Main
-fn main() -> i32 do
+fn main() do
   with {:ok, buffer} <- read_all(IO.stdin(), Buffer.new()),
       {:ok, text} <- String.from_bytes(Buffer.to_bytes(buffer)),
       {:ok, formatted} <- Pretty.format(text) do
     IO.println(formatted)
-    0
   else
     utf8_error: {:error, String.Utf8Error} ->
       IO.report("error: input is not valid UTF-8")
-      1
     {:error, error} ->
       IO.report(error)
-      1
   end
 end
 
